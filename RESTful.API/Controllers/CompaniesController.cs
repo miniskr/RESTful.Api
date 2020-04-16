@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using RESTful.API.DtoParmeters;
 using RESTful.API.Models;
 using RESTful.API.Services;
 using System;
@@ -24,10 +25,10 @@ namespace RESTful.API.Controllers
             this._mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies()
+        [HttpGet, HttpHead]
+        public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies([FromQuery]CompanyDtoParameters parameters)
         {
-            var companies = await this._companyRepository.GetCompaniesAsync();
+            var companies = await this._companyRepository.GetCompaniesAsync(parameters);
 
             var companyDtos = this._mapper.Map<IEnumerable<CompanyDto>>(companies);
             return Ok(companyDtos);

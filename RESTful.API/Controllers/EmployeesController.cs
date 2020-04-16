@@ -25,12 +25,12 @@ namespace RESTful.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployeesForCompany(Guid companyId)
+        public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployeesForCompany(Guid companyId, [FromQuery(Name = "gender")]string genderDisplay, string q)
         {
             if (!await this._companyRepository.CompanyExistsAsync(companyId))
                 return NotFound($"can not found employees from {companyId}");
 
-            var employees = await this._companyRepository.GetEmployeesAsync(companyId);
+            var employees = await this._companyRepository.GetEmployeesAsync(companyId, genderDisplay, q);
             var employeeDtos = this._mapper.Map<IEnumerable<EmployeeDto>>(employees);
 
             return Ok(employeeDtos);

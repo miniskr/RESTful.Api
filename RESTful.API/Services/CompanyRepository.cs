@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RESTful.API.Data;
+using RESTful.API.DtoParmeters;
 using RESTful.API.Entities;
 using System;
 using System.Collections.Generic;
@@ -26,9 +27,33 @@ namespace RESTful.API.Services
             return await this._context.Companies.FirstOrDefaultAsync(x => x.Id == companyId);
         }
 
-        public async Task<IEnumerable<Company>> GetCompaniesAsync()
+        public async Task<IEnumerable<Company>> GetCompaniesAsync(CompanyDtoParameters parameters)
         {
-            return await this._context.Companies.ToListAsync();
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
+
+            if (string.IsNullOrWhiteSpace(parameters.CompanyName) &&
+                string.IsNullOrWhiteSpace(parameters.SearchTerm))
+                return await this._context.Companies.ToListAsync();
+
+            var queryExpression = this._context.Companies as IQueryable<Company>;
+
+            if (!string.IsNullOrWhiteSpace(parameters.CompanyName))
+            {
+                parameters.CompanyName = parameters.CompanyName.Trim();
+
+                queryExpression = queryExpression.Where(x => x.Name == parameters.CompanyName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
+                parameters.SearchTerm = parameters.SearchTerm.Trim();
+
+                queryExpression = queryExpression.Where(x => x.Name.Contains(parameters.SearchTerm)
+                                                        || x.Introduction.Contains(parameters.SearchTerm));
+            }
+
+            return await queryExpression.ToListAsync();
         }
 
         public async Task<IEnumerable<Company>> GetCompaniesAsync(IEnumerable<Guid> companyIds)
@@ -91,15 +116,43 @@ namespace RESTful.API.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<Employee>> GetEmployeesAsync(Guid companyId)
+        public async Task<IEnumerable<Employee>> GetEmployeesAsync(Guid companyId, string genderDisplay, string q)
         {
             if (companyId == Guid.Empty)
                 throw new ArgumentNullException(nameof(companyId));
 
-            return await this._context.Employees
+
+            if (string.IsNullOrWhiteSpace(genderDisplay) && string.IsNullOrWhiteSpace(q))
+            {
+                return await this._context.Employees
                 .Where(x => x.CompanyId == companyId)
                 .OrderBy(x => x.EmployeeNo)
                 .ToListAsync();
+            }
+
+            var items = this._context.Employees.Where(x => x.CompanyId == companyId);
+
+            if (!string.IsNullOrWhiteSpace(genderDisplay))
+            {
+                genderDisplay = genderDisplay.Trim();
+                var gender = Enum.Parse<Gender>(genderDisplay);
+
+                items = items.Where(x => x.Gender == gender);
+            }
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                q = q.Trim();
+
+                items.Where(x => x.EmployeeNo.Contains(q)
+                                || x.FirstName.Contains(q)
+                                || x.LastName.Contains(q));
+            }
+
+            items.OrderBy(x => x.EmployeeNo);
+
+            return await items.ToListAsync();
+
         }
 
         public void AddEmployee(Guid companyId, Employee employee)
