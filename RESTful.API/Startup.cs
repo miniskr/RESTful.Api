@@ -34,7 +34,7 @@ namespace RESTful.API
 
             services.AddDbContext<RoutineDbContext>(option =>
             {
-                option.UseSqlite("Data Source = restful.db");
+                option.UseSqlite("Data Source = ../restful.db");
             });
         }
 

@@ -34,7 +34,9 @@ namespace RESTful.API.Services
 
             if (string.IsNullOrWhiteSpace(parameters.CompanyName) &&
                 string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
                 return await this._context.Companies.ToListAsync();
+            }
 
             var queryExpression = this._context.Companies as IQueryable<Company>;
 
@@ -73,9 +75,13 @@ namespace RESTful.API.Services
                 throw new ArgumentNullException(nameof(company));
 
             company.Id = Guid.NewGuid();
-            foreach (var employee in company.Employees)
+
+            if (company.Employees != null)
             {
-                employee.Id = Guid.NewGuid();
+                foreach (var employee in company.Employees)
+                {
+                    employee.Id = Guid.NewGuid();
+                }
             }
 
             this._context.Add(company);

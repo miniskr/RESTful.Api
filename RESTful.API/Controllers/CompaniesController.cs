@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using RESTful.API.DtoParmeters;
+using RESTful.API.Entities;
 using RESTful.API.Models;
 using RESTful.API.Services;
 using System;
@@ -34,7 +35,7 @@ namespace RESTful.API.Controllers
             return Ok(companyDtos);
         }
 
-        [HttpGet("{companyId}")]
+        [HttpGet("{companyId}", Name = nameof(GetCompany))]
         public async Task<ActionResult<CompanyDto>> GetCompany([FromRoute]Guid companyId)
         {
             var exist = await this._companyRepository.CompanyExistsAsync(companyId);
@@ -48,6 +49,19 @@ namespace RESTful.API.Controllers
                 return NotFound();
 
             return Ok(this._mapper.Map<CompanyDto>(company));
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<CompanyDto>> CreateCompany([FromBody]CompanyAddDto company)
+        {
+            var entity = this._mapper.Map<Company>(company);
+
+            this._companyRepository.AddCompany(entity);
+
+            await this._companyRepository.SaveAsync();
+
+            var returnDto = this._mapper.Map<CompanyDto>(entity);
+            return CreatedAtAction(nameof(GetCompany), new { companyId = returnDto.Id }, returnDto);
         }
     }
 }
